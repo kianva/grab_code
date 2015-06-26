@@ -1,0 +1,63 @@
+<?php
+header("Content-type:text/html;charset=utf-8");
+class Crawler{
+	public function get_v2ex($url,$dir){
+		$img_count = 0 ;
+		$no = 1;
+		set_time_limit(0);
+		$r = file_get_contents($url);
+		$pattern = '/<img\s+src=\".*\"\s+.*class=\"imgly\"/';
+		$pattern2 = '/http.*\.jpg\"/U';
+		if( $n = preg_match_all($pattern,$r,$matches) > 0 ){
+			echo '总'.$n.'次<br/>';
+			//var_dump($matches);
+			$len = count($matches[0]);
+			for($i=0;$i<$len;$i++){
+				if( $n2 = preg_match_all($pattern2, $matches[0][$i],$matches2) > 0 ){
+					echo '子匹配成功:匹配到'.count($matches2[0]).'张图片<br/>';
+					//var_dump($matches2);
+					for($j=0;$j<$n2;$j++){
+
+						$img_src = $matches2[0][$j];
+						$x = $j+1;
+						echo '图'.$x.'地址:'.$img_src.'<br/>';
+						$this->save_pic($dir.$no.'.jpg',file_get_contents($img_src),$no);
+						$no++;
+					}
+					$img_count += count($matches2[0]);		
+					echo "<br/>";
+				}
+			}
+			return $img_count;
+		}else{
+			echo '抓取失败<br/>';
+		}
+	}
+
+	public function save_pic($file,$img_src,$no){
+
+		if( file_put_contents($file,$img_src) > 0 ){
+			echo $no.':存入本地成功,存入'.$file.'目标来源:'.$img_src.'<br/>';
+		}else{
+			echo $no.':存入本地失败,目标文件地址'.$img_src.'<br/>';
+		}
+	}
+
+	public function create_dir($dir){
+		if( !is_dir($dir) ){
+			mkdir($dir);
+		}
+	}
+}
+
+$img_count = 0 ;
+$dir = 'd:/v2ex_pic/';
+$c = new Crawler ;
+$c->create_dir($dir);
+for($p = 1 ;$p<=5;$p++){
+	
+	$url = 'http://www.v2ex.com/t/111951?p='.$p;
+	$img_count += $c->get_v2ex($url,$dir);
+	echo $img_count.'张<br/>';
+	
+}
